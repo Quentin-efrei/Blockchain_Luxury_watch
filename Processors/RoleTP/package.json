@@ -1,0 +1,26 @@
+{
+  "name": "roletp",
+  "version": "1.0.0",
+  "description": "test",
+  "main": "info.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://gitlab.com/TeamKBA/chd-course/sawtooth_exercises/drug_traceability.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "alert-node": "^1.2.5",
+    "crypto": "^1.0.1",
+    "node-fetch": "^2.6.0",
+    "popups": "^1.1.3",
+    "sawtooth-sdk": "^1.0.5",
+    "text-encoding": "^0.7.0"
+  }
+}

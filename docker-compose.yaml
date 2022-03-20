@@ -1,0 +1,96 @@
+version: "2.0"
+
+services:
+  
+  settings-tp:
+    image: hyperledger/sawtooth-settings-tp:1.1
+    container_name: sawtooth-settings-tp-default
+    depends_on:
+      - validator
+    entrypoint: settings-tp -vv -C tcp://validator:4004
+
+  validator:
+    image: hyperledger/sawtooth-validator:1.1
+    container_name: validator
+    expose:
+      - 4004
+    ports:
+      - "4004:4004"
+    # start the validator with an empty genesis batch
+    entrypoint: "bash -c \"\
+        sawadm keygen && \
+        sawtooth keygen my_key && \
+        sawset genesis -k /root/.sawtooth/keys/my_key.priv && \
+        sawadm genesis config-genesis.batch && \
+        sawtooth-validator -vv \
+          --endpoint tcp://validator:8800 \
+          --bind component:tcp://eth0:4004 \
+          --bind network:tcp://eth0:8800 \
+          --bind consensus:tcp://eth0:5050 \
+        \""
+
+  watch_event:
+    container_name: watch_event
+    build:
+      context: ./Event
+      dockerfile: Dockerfile
+    image: "blockchain_watch_event"
+    depends_on:
+        - validator
+
+  devmode-engine:
+    image: hyperledger/sawtooth-devmode-engine-rust:1.1
+    container_name: devmode-engine
+    depends_on:
+      - validator
+    entrypoint: devmode-engine-rust -C tcp://validator:5050
+
+  rest-api:
+    image: hyperledger/sawtooth-rest-api:1.1
+    container_name: rest-api
+    ports:
+      - "8008:8008"
+    depends_on:
+      - validator
+    entrypoint: sawtooth-rest-api -C tcp://validator:4004 --bind rest-api:8008
+  watchtrace_processor:
+    container_name: watchtrace_processor
+    build:
+      context: ./Processors
+      dockerfile: WatchTraceTP/Dockerfile
+      args:
+        - http_proxy
+        - https_proxy
+        - no_proxy
+    image: "blockchain_watchtrace_processor"
+    depends_on:
+        - validator
+  role_processor:
+    container_name: role_processor
+    build:
+      context: ./Processors
+      dockerfile: RoleTP/Dockerfile
+      args:
+        - http_proxy
+        - https_proxy
+        - no_proxy
+    image: "blockchain_role_processor"
+    depends_on:
+        - validator
+  watchtrace_client:
+    container_name: watchtrace_client
+    expose:
+       - 3000
+    ports:
+       - 3000:3000
+    build:
+      context: ./Client
+      dockerfile: DockerFile
+      args:
+        - http_proxy
+        - https_proxy
+        - no_proxy
+    image: "blockchain_watchtrace_client"
+    depends_on:
+        - validator
+
